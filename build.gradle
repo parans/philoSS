@@ -1,0 +1,56 @@
+//Remember gradle build includes all these tasks
+//Tasks to be executed: [task ':compileJava', task ':processResources', task ':classes', task ':jar', task ':startScripts', task ':distTar', task ':distZip', task ':shadowJar', task ':startShadowScripts', task ':shadowDistTar', task ':shadowDistZip', task ':assemble', task ':compileTestJava', task ':processTestResources', task ':testClasses', task ':test', task ':check', task ':build']
+
+//This is required for the gradle build itself
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+	url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+        classpath 'com.palantir.gradle.docker:gradle-docker:0.25.0'
+    }
+}
+
+apply plugin: 'java'
+//This plugin is needed to create a fat jar
+apply plugin: 'com.github.johnrengelman.shadow'
+//application plugin makes it an executable
+apply plugin: 'application'
+apply plugin: 'com.palantir.docker'
+
+
+mainClassName = 'stackserver.MainServer'
+
+repositories {
+        mavenCentral()
+}
+
+dependencies {
+    compile group: 'joda-time', name: 'joda-time', version:'2.2'
+    compile group: 'commons-io', name: 'commons-io', version: '2.4' 
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+docker {
+    //dependsOn bootRepackage
+    name 'annoying:v0'
+    tags 'v0'
+
+    //located in the build context which is a folder in build/docker
+    dockerfile file("docker/Dockerfile")
+
+    //directly reference the Jar file in the Dockerfile
+    def artifact = "${rootProject.name}-all.jar"
+    // copies artifact + Dockerfile to the build context
+    files "$libsDir/$artifact", "$projectDir/docker/Dockerfile"
+
+    //passing in the jar file location via --build-arg key=value
+    buildArgs(['JAR_FILE': artifact])
+    pull false
+    noCache true
+}
