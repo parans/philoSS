@@ -1,8 +1,6 @@
 package stackserver;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
@@ -41,7 +39,6 @@ public class ConnectionHandler implements Runnable {
 				logger.info("Writing out the request to socket");
 				connection.channel.write(ByteBuffer.wrap(output));
 				logger.info("Done writing request");
-				//connection.socket.getOutputStream().flush();
 			}
 		} catch (IOException e) {
 			logger.info("IOException:" + e.getStackTrace());
@@ -52,12 +49,6 @@ public class ConnectionHandler implements Runnable {
 			synchronizer.lock();
 			connectionQueue.remove(connection.channel);
 			synchronizer.unlock();
-			/*try {
-				connection.channel.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
 		}
 	}
 }

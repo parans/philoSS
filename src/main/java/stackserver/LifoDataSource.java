@@ -32,7 +32,6 @@ public class LifoDataSource implements DataSource {
 				stackFull.await();
 			} catch (InterruptedException e) {
 				logger.info(Thread.currentThread() + " interrupted");
-				//e.printStackTrace();
 				stackLock.unlock();
 				return null;
 			}
@@ -52,7 +51,6 @@ public class LifoDataSource implements DataSource {
 				stackEmpty.await();
 			} catch (InterruptedException e) {
 				logger.info(Thread.currentThread() + " interrupted");
-				//e.printStackTrace();
 				stackLock.unlock();
 				return null;
 			}

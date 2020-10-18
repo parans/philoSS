@@ -54,7 +54,7 @@ public class StackServerIntegrationTest {
             public void run() {
                  try {
                     ms.startServer();
-                } catch (IOException | InterruptedException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
                  
@@ -62,7 +62,7 @@ public class StackServerIntegrationTest {
         };
        Thread s = new Thread(server);
        s.start();
-       Thread.sleep(5000L);
+       Thread.sleep(7000L);
 	}
 	
 	private void sendReceive(InetSocketAddress hostAddress, byte[] arr) throws IOException, InterruptedException {
@@ -79,6 +79,13 @@ public class StackServerIntegrationTest {
 		client.close();
 	}
 	
+	private void send(InetSocketAddress hostAddress, byte b) throws IOException, InterruptedException {
+		SocketChannel client = SocketChannel.open(hostAddress);
+		//client.socket().bind(hostAddress);
+		client.socket().getOutputStream().write(b);
+        System.out.println("Writing done");
+	}
+	
 	@Test
 	public void test() throws IOException, InterruptedException {
 		
@@ -91,11 +98,25 @@ public class StackServerIntegrationTest {
 			sendReceive(hostAddress, arr);
 		}
         
+		byte[] arr2 = new byte[] {0x02, 'Z', 'S'};
+		SocketChannel client = SocketChannel.open(hostAddress);
+		//client.socket().bind(hostAddress);
+		client.socket().getOutputStream().write(arr2[0]);
+		client.socket().getOutputStream().write(arr2[1]);
+		
         arr = new byte[] {(byte) 0x80};
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 3; i++) {
 			System.out.println("Sending pop request to Socket Server");
 			sendReceive(hostAddress, arr);
 		}
+		
+		client.socket().getOutputStream().write(arr2[2]);
+		
+		for (int i = 0; i < 2; i++) {
+			System.out.println("Sending pop request to Socket Server");
+			sendReceive(hostAddress, arr);
+		}
+		client.close();
 	}
 
 }
