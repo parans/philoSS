@@ -1,5 +1,6 @@
 package stackserver;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class PacketSerializer {
@@ -10,6 +11,7 @@ public class PacketSerializer {
 	
 	public static Request deserialize(byte[] packet) {
 		Request req = null;
+		if(packet == null) return req;
 		byte first = packet[0];
 		if(first < 0) {
 			req = new PopRequest();
@@ -18,6 +20,7 @@ public class PacketSerializer {
 			byte[] payload = Arrays.copyOfRange(packet, 1, packet.length);
 			req = new PushRequest();
 			req.payload(payload);
+			System.out.println("Payload:" + new String(payload, StandardCharsets.US_ASCII));
 		}
 		return req;
 	}

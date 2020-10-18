@@ -38,43 +38,17 @@ import stackserver.Service;
 @RunWith(JUnit4ClassRunner.class)
 public class StackServerBasicTest {
 	
-	static ReentrantLock synchronizer;
 	static Service service;
-	static ServerPool sp;
-	
-	 static class LocalConnectionHandler extends ConnectionHandler  {
-		 byte[] item;
-		 byte[] output;
-		 
-		 	public LocalConnectionHandler(Socket soc, ServerPool sp, Service service, ReentrantLock synchronizer, byte[] item) {
-				super(soc, sp, service, synchronizer);
-				this.item = item;
-			}
-			
-			@Override
-			public void run() {
-				socketMap.put(socket, Thread.currentThread());
-				byte[] packet = this.item;
-				Request req = PacketSerializer.deserialize(packet);
-				req.service(serviceImpl);
-				Response res = serviceImpl.handleRequest(req);
-				output = PacketSerializer.serialize(res);
-				try {
-					socket.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				socketMap.remove(socket);
-			}
-	}
+	static LocalServerPool sp;
+	static MainServer ms;
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		synchronizer = new ReentrantLock(true);
-		sp = new ServerPool(5, synchronizer);
 		DataSource ds = new LifoDataSource(5);
     	service = new LifoService(ds);
+    	sp = new LocalServerPool(5, service);
+    	ms = new MainServer(sp, "localhost", 7007);
+    	ms.startServer();
 	}
 	
 	@After
@@ -82,16 +56,15 @@ public class StackServerBasicTest {
 		sp.drain();
 	}
 	
-	@Test
+	/*@Test
 	public void testBasic() throws IOException, InterruptedException {
-		
+		InetAddress host = InetAddress.getLocalHost();
 		byte[] arr = new byte[] {(byte) 0x80};
 		List<LocalConnectionHandler> lchs = new LinkedList<>();
 		for(int i=0; i<3; i++) {
 			System.out.println("Sending pop request to Socket Server");
-			Socket soc = new Socket();
-			LocalConnectionHandler ch = new LocalConnectionHandler(soc, sp, service, synchronizer, arr);
-			sp.submit(ch);
+			Socket soc = new Socket(host.getHostName(), 7007);
+			sp.submit(soc, arr);
 			lchs.add(ch);
 	        Thread.sleep(1000L);
 		}
@@ -100,8 +73,7 @@ public class StackServerBasicTest {
 		for(int i=0; i<5; i++) {
 			System.out.println("Sending request to Socket Server");
 			Socket soc = new Socket();
-			LocalConnectionHandler ch = new LocalConnectionHandler(soc, sp, service, synchronizer, arr);
-			while(!sp.submit(ch));
+			while(!sp.submit(soc));
 	        Thread.sleep(1000L);
 		}
 		
@@ -120,13 +92,10 @@ public class StackServerBasicTest {
 	@Test
 	public void testServerBusy() throws IOException, InterruptedException {
 		byte[] arr = new byte[] {(byte) 0x80};
-		List<LocalConnectionHandler> lchs = new LinkedList<>();
 		for(int i=0; i<5; i++) {
 			System.out.println("Sending pop request to Socket Server");
 			Socket soc = new Socket();
-			LocalConnectionHandler ch = new LocalConnectionHandler(soc, sp, service, synchronizer, arr);
-			sp.submit(ch);
-			lchs.add(ch);
+			sp.submit(soc, arr);
 	        Thread.sleep(1000L);
 		}
 		
@@ -134,8 +103,7 @@ public class StackServerBasicTest {
 		for(int i=0; i<3; i++) {
 			System.out.println("Sending pop request to Socket Server");
 			Socket soc = new Socket();
-			LocalConnectionHandler ch = new LocalConnectionHandler(soc, sp, service, synchronizer, arr);
-			boolean success = sp.submit(ch);
+			boolean success = sp.submit(soc, arr);
 			assertFalse("False expected", success);
 		}
 	}
@@ -144,13 +112,10 @@ public class StackServerBasicTest {
 	public void testServerStateAfterSleep() throws IOException, InterruptedException {
 		
 		byte[] arr = new byte[] {(byte) 0x80};
-		List<LocalConnectionHandler> lchs = new LinkedList<>();
 		for(int i=0; i<5; i++) {
 			System.out.println("Sending pop request to Socket Server");
 			Socket soc = new Socket();
-			LocalConnectionHandler ch = new LocalConnectionHandler(soc, sp, service, synchronizer, arr);
-			sp.submit(ch);
-			lchs.add(ch);
+			sp.submit(soc, arr);
 	        Thread.sleep(1000L);
 		}
 		
@@ -160,10 +125,9 @@ public class StackServerBasicTest {
 		for(int i=0; i<3; i++) {
 			System.out.println("Sending pop request to Socket Server");
 			Socket soc = new Socket();
-			LocalConnectionHandler ch = new LocalConnectionHandler(soc, sp, service, synchronizer, arr);
-			boolean success = sp.submit(ch);
+			boolean success = sp.submit(soc, arr);
 			assertTrue("True expected", success);
 			Thread.sleep(1000L);
 		}
-	}
+	}*/
 }

@@ -14,6 +14,7 @@ public class LifoService implements Service {
 	
 	@Override
 	public Response handleRequest(Request req) {
+		if(req == null) return null;
 		return req.execute();
 	}
 	

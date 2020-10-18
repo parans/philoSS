@@ -19,14 +19,15 @@ public class LifoDataSource implements DataSource {
 	public LifoDataSource(int cap) {
 		this.capacity = cap;
 		stack = new LinkedList<>();
-		stackLock = new ReentrantLock();
+		stackLock = new ReentrantLock(true);
 		stackFull = stackLock.newCondition();
 		stackEmpty = stackLock.newCondition();
 	}
 	
 	public byte[] addItem(byte[] item) {
+		if(item == null || item.length == 0) return new byte[] {0};
 		stackLock.lock();
-		if(stack.size() == capacity) {
+		while(stack.size() == capacity) {
 			try {
 				stackFull.await();
 			} catch (InterruptedException e) {
@@ -39,14 +40,14 @@ public class LifoDataSource implements DataSource {
 		stack.addLast(item);
 		stackEmpty.signal();
 		stackLock.unlock();
-		System.out.println("Adding item to dataSource:" + new String(item, StandardCharsets.UTF_8));
+		System.out.println("Adding item to dataSource:" + new String(item, StandardCharsets.US_ASCII));
 		byte[] res = new byte[] {0};
 		return res;
 	}
 	
 	public byte[] remove() {
 		stackLock.lock();
-		if(stack.isEmpty()) {
+		while(stack.isEmpty()) {
 			try {
 				stackEmpty.await();
 			} catch (InterruptedException e) {
@@ -59,7 +60,7 @@ public class LifoDataSource implements DataSource {
 		byte[] item = stack.removeLast();
 		stackFull.signal();
 		stackLock.unlock();
-		System.out.println("Removing item from dataSource:" + new String(item, StandardCharsets.UTF_8));
+		System.out.println("Removing item from dataSource:" + new String(item, StandardCharsets.US_ASCII));
 		return item;
 	}
 }

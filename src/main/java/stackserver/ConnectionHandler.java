@@ -3,64 +3,61 @@ package stackserver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 public class ConnectionHandler implements Runnable {
 
-	protected Socket socket;
-	protected ServerPool pool;
+	protected Connection connection;
 	protected Service serviceImpl;
 	protected ReentrantLock synchronizer;
-	protected static Map<Socket, Thread> socketMap;
+	protected Map<SocketChannel, Thread> socketMap;
+	protected Map<SocketChannel, Long> connectionQueue;
 	static Logger logger = Logger.getLogger(ConnectionHandler.class.getName());
-	static {
-		socketMap = new ConcurrentHashMap<Socket, Thread>();
-	}
 	
-	public ConnectionHandler(Socket socket, ServerPool pool, Service service, ReentrantLock sync) {
-		this.socket = socket;
-		this.pool = pool;
+	public ConnectionHandler(Connection connection, Service service, ReentrantLock sync, Map<SocketChannel, Long> connectionQueue,
+			Map<SocketChannel, Thread> socketMap) {
+		this.connection = connection;
 		this.serviceImpl = service;
 		this.synchronizer = sync;
-	}
-	
-	public static void abortHandler(Socket socket) {
-		if(socketMap.containsKey(socket)) {
-			Thread handler = socketMap.get(socket);
-			handler.interrupt();
-		}
+		this.socketMap = socketMap;
+		this.connectionQueue = connectionQueue;
 	}
 	
 	@Override
 	public void run() {
 		byte[] output = null;
-		socketMap.put(socket, Thread.currentThread());
-		try(InputStream is = socket.getInputStream()) {
-			byte[] packet = StreamReader.toByteArray(is);
+		socketMap.put(connection.channel, Thread.currentThread());
+		try {
+			byte[] packet = StreamReader.toByteArray(connection.is);
 			Request req = PacketSerializer.deserialize(packet);
 			req.service(serviceImpl);
 			Response res = serviceImpl.handleRequest(req);
 			output = PacketSerializer.serialize(res);
-			if(output != null && !socket.isClosed()) {
+			if(output != null && connection.channel.isOpen()) {
 				logger.info("Writing out the request to socket");
-				socket.getOutputStream().write(output);
-				socket.getOutputStream().flush();
+				connection.channel.write(ByteBuffer.wrap(output));
+				logger.info("Done writing request");
+				//connection.socket.getOutputStream().flush();
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.info("IOException:" + e.getStackTrace());
+		} catch (InterruptedException e) {
+			logger.info("Thread interrupted while reading:" + e.getMessage());
 		} finally {
-			socketMap.remove(socket);
+			socketMap.remove(connection.channel);
 			synchronizer.lock();
-			pool.connectionQueue().remove(socket);
+			connectionQueue.remove(connection.channel);
 			synchronizer.unlock();
-			try {
-				socket.close();
+			/*try {
+				connection.channel.close();
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
 		}
 	}
 }

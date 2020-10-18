@@ -11,6 +11,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -23,6 +24,7 @@ import stackserver.StreamReader;
 
 public class StreamReaderTest {
 	
+	@Ignore
 	@Test
 	public void testPushPacket() throws IOException, InterruptedException {
 		final List<byte[]> ops = new LinkedList<>();
@@ -65,6 +67,7 @@ public class StreamReaderTest {
 		stackServerSocket.close();	
 	}
 	
+	@Ignore
 	@Test
 	public void testPopPacket() throws IOException, InterruptedException {
 		final List<byte[]> ops = new LinkedList<>();
@@ -105,6 +108,64 @@ public class StreamReaderTest {
         }
         ops.clear();
 		stackServerSocket.close();
+	}
+	
+	@Ignore
+	@Test
+	public void testClosedSocket() throws IOException, InterruptedException {
+		final List<byte[]> ops = new LinkedList<>();
+		ServerSocket stackServerSocket = new ServerSocket(4505);
+		Thread t = new Thread(() -> {
+			while (true) {
+				try {
+					Socket socket = stackServerSocket.accept();
+					byte[] input = StreamReader.toByteArray(socket.getInputStream());
+					ops.add(input);
+					byte[] op = new byte[] { 0x08, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+					byte[] arr = StreamReader.toByteArray(socket.getInputStream());
+					if (arr == null)
+						break;
+					socket.getOutputStream().write(op);
+					socket.getOutputStream().flush();
+					socket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				if (ops.size() == 0)
+					break;
+			}
+		}, "SockRunner");
+		t.start();
+
+		byte[] arr = new byte[] { (byte) 0x80 };
+		System.out.println("Sending push request to Socket Server");
+		// write to socket using ObjectOutputStream
+		InetAddress host = InetAddress.getLocalHost();
+		Socket mainServerSocket = new Socket(host.getHostName(), 4505);
+		mainServerSocket.getOutputStream().write(arr);
+		mainServerSocket.getOutputStream().flush();
+		mainServerSocket.close();
+
+		Thread.sleep(1000L);
+		ops.clear();
+		stackServerSocket.close();
+		t.join();
+	}
+	
+	@Test
+	public void testLinkedBlockingStreamReader() throws InterruptedException {
+		final byte[] op = new byte[] { 0x08, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+		final LinkedBlockingQueue<Byte> lbq = new LinkedBlockingQueue<>();
+		Thread one = new Thread(() -> {
+			for(byte b : op) {
+				lbq.offer(b);
+			}
+		}, "Runner");
+		one.start();
+		
+		byte[] barr = StreamReader.toByteArray(lbq);
+		assertArrayEquals(op, barr);
+		one.join();
 	}
 
 }

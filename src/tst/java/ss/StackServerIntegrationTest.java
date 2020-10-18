@@ -4,8 +4,11 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,61 +20,81 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ss.StackServerBasicTest.LocalConnectionHandler;
+import stackserver.DataSource;
+import stackserver.LifoDataSource;
+import stackserver.LifoService;
+import stackserver.MainServer;
+import stackserver.ServerPool;
+import stackserver.Service;
 import stackserver.StreamReader;
+import stackserver.nio.SocketClientExample;
+import stackserver.nio.SocketServerExample;
 
 public class StackServerIntegrationTest {
 
-	//static Socket evenLoopSocket;
-	//static Socket mainServerSocket;
+	static Service service;
+	static ServerPool sp;
+	static MainServer ms;
 	
-	@After
-	public void tearDown() throws IOException {
-		 //byte[] arr = new byte[] {(byte) 0x88};
-		 //evenLoopSocket.getOutputStream().write(arr);
+	@AfterClass
+	public static void tearDownAfterClass() throws IOException {
+		System.out.println("Stop server");
+		ms.stop();
 	}
 	
 	@BeforeClass
-	public static void setupBeforeClass() throws UnknownHostException, IOException {
-		//InetAddress host = InetAddress.getLocalHost();
-		//evenLoopSocket = new Socket(host.getHostName(), 8081);
-		//mainServerSocket = new Socket(host.getHostName(), 8080);
+	public static void setupBeforeClass() throws UnknownHostException, IOException, InterruptedException {
+		DataSource ds = new LifoDataSource(5);
+    	service = new LifoService(ds);
+    	sp = new ServerPool(5, service);
+    	ms = new MainServer(sp, "localhost", 8080);
+		
+		Runnable server = new Runnable() {
+            @Override
+            public void run() {
+                 try {
+                    ms.startServer();
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+                 
+            }
+        };
+       Thread s = new Thread(server);
+       s.start();
+       Thread.sleep(5000L);
+	}
+	
+	private void sendReceive(InetSocketAddress hostAddress, byte[] arr) throws IOException, InterruptedException {
+		SocketChannel client = SocketChannel.open(hostAddress);
+		//client.socket().bind(hostAddress);
+		client.socket().getOutputStream().write(arr);
+        System.out.println("Writing done");
+		
+		byte[] res = StreamReader.toByteArray(client.socket().getInputStream());
+		System.out.println("Reading done");
+		String message = new String(res, StandardCharsets.UTF_8.name());
+		System.out.println("Message: " + message);
+		//Thread.sleep(1000L);
+		client.close();
 	}
 	
 	@Test
 	public void test() throws IOException, InterruptedException {
-		InetAddress host = InetAddress.getLocalHost();
-		Socket mainServerSocket = null;
-        byte[] arr = new byte[] {0x08, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
-		for (int i = 0; i < 3; i++) {
+		
+		InetSocketAddress hostAddress = new InetSocketAddress("localhost", 8080);
+		
+        byte[] arr = new byte[] {0x08, 'u', '5', '1', '7', 'j', 'X', 'O', 'M'};
+		for (int i = 0; i < 5; i++) {
 			System.out.println("Sending push request to Socket Server");
 			// write to socket using ObjectOutputStream
-			mainServerSocket = new Socket(host.getHostName(), 8080);
-			mainServerSocket.getOutputStream().write(arr);
-			mainServerSocket.getOutputStream().flush();
-			System.out.println("Writing done");
-			
-			byte[] res = StreamReader.toByteArray(mainServerSocket.getInputStream());
-			System.out.println("Reading done");
-			String message = new String(res, StandardCharsets.UTF_8.name());
-			System.out.println("Message: " + message);
-			Thread.sleep(1000L);
-			mainServerSocket.close();
+			sendReceive(hostAddress, arr);
 		}
         
         arr = new byte[] {(byte) 0x80};
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 5; i++) {
 			System.out.println("Sending pop request to Socket Server");
-			// write to socket using ObjectOutputStream
-			mainServerSocket = new Socket(host.getHostName(), 8080);
-			mainServerSocket.getOutputStream().write(arr);
-			mainServerSocket.getOutputStream().flush();
-			
-			byte[] res = StreamReader.toByteArray(mainServerSocket.getInputStream());
-			String message = new String(res, StandardCharsets.UTF_8.name());
-			System.out.println("Message: " + message);
-			Thread.sleep(1000L);
-			mainServerSocket.close();
+			sendReceive(hostAddress, arr);
 		}
 	}
 
