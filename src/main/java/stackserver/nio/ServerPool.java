@@ -43,8 +43,9 @@ public class ServerPool {
 	public void abortHandler(SocketChannel socket) {
 		if (socketMap.containsKey(socket)) {
 			Thread handler = socketMap.get(socket);
-			if (handler != null)
+			if (handler != null) {
 				handler.interrupt();
+			}
 		}
 	}
 
@@ -62,6 +63,9 @@ public class ServerPool {
 			}
 			if (connectionQueue.size() == poolSize) {
 				SocketChannel key = connectionQueue.keySet().iterator().next();
+				/**
+				 * Check if connection is older than 10s
+				 */
 				if (connectionQueue.get(key) + 10000L < System
 						.currentTimeMillis()) {
 					logger.info("Aborting slow client");
