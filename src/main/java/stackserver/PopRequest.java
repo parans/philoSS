@@ -1,15 +1,14 @@
 package stackserver;
 
-
-public class PopRequest implements Request{
+public class PopRequest implements Request {
 
 	byte[] payload;
 	Service serviceImpl;
-	
+
 	@Override
 	public Response execute() {
 		byte[] res = serviceImpl.dataSource().remove();
-		if(res == null) {
+		if (res == null) {
 			return new PopResponse(null);
 		}
 		byte len = (byte) res.length;

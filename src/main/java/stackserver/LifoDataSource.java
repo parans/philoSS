@@ -7,15 +7,15 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 public class LifoDataSource implements DataSource {
-	
-	int capacity;
-	ReentrantLock stackLock;
-	LinkedList<byte[]> stack;
-	Condition stackFull;
-	Condition stackEmpty;
-	
+
+	private int capacity;
+	private ReentrantLock stackLock;
+	private LinkedList<byte[]> stack;
+	private Condition stackFull;
+	private Condition stackEmpty;
+
 	static Logger logger = Logger.getLogger(LifoDataSource.class.getName());
-	
+
 	public LifoDataSource(int cap) {
 		this.capacity = cap;
 		stack = new LinkedList<>();
@@ -23,11 +23,12 @@ public class LifoDataSource implements DataSource {
 		stackFull = stackLock.newCondition();
 		stackEmpty = stackLock.newCondition();
 	}
-	
+
 	public byte[] addItem(byte[] item) {
-		if(item == null || item.length == 0) return new byte[] {0};
+		if (item == null || item.length == 0)
+			return new byte[]{0};
 		stackLock.lock();
-		while(stack.size() == capacity) {
+		while (stack.size() == capacity) {
 			try {
 				stackFull.await();
 			} catch (InterruptedException e) {
@@ -39,14 +40,15 @@ public class LifoDataSource implements DataSource {
 		stack.addLast(item);
 		stackEmpty.signal();
 		stackLock.unlock();
-		System.out.println("Adding item to dataSource:" + new String(item, StandardCharsets.US_ASCII));
-		byte[] res = new byte[] {0};
+		logger.info("Adding item to dataSource:"
+				+ new String(item, StandardCharsets.US_ASCII));
+		byte[] res = new byte[]{0};
 		return res;
 	}
-	
+
 	public byte[] remove() {
 		stackLock.lock();
-		while(stack.isEmpty()) {
+		while (stack.isEmpty()) {
 			try {
 				stackEmpty.await();
 			} catch (InterruptedException e) {
@@ -58,7 +60,8 @@ public class LifoDataSource implements DataSource {
 		byte[] item = stack.removeLast();
 		stackFull.signal();
 		stackLock.unlock();
-		System.out.println("Removing item from dataSource:" + new String(item, StandardCharsets.US_ASCII));
+		logger.info("Removing item from dataSource:"
+				+ new String(item, StandardCharsets.US_ASCII));
 		return item;
 	}
 }

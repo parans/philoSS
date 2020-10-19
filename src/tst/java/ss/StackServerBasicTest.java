@@ -47,7 +47,7 @@ public class StackServerBasicTest {
 		DataSource ds = new LifoDataSource(5);
     	service = new LifoService(ds);
     	sp = new LocalServerPool(5, service);
-    	ms = new MainServer(sp, "localhost", 7007);
+    	ms = new MainServer(sp, "localhost", 7007, 5);
     	ms.startServer();
 	}
 	

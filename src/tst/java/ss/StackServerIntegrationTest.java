@@ -47,7 +47,7 @@ public class StackServerIntegrationTest {
 		DataSource ds = new LifoDataSource(5);
     	service = new LifoService(ds);
     	sp = new ServerPool(5, service);
-    	ms = new MainServer(sp, "localhost", 8080);
+    	ms = new MainServer(sp, "localhost", 8080, 5);
 		
 		Runnable server = new Runnable() {
             @Override

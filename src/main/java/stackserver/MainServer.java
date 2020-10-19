@@ -77,8 +77,6 @@ public class MainServer {
 						accept(key);
 					} else if (key.isReadable()) {
 						read(key);
-					} else if (key.isWritable()) {
-						write(key);
 					}
 				}
 			} catch (IOException e1) {
@@ -88,7 +86,7 @@ public class MainServer {
 			try {
 				Thread.sleep(3);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				logger.info("Interrupted while sleeping");
 			}
 		}
 	}
@@ -135,17 +133,6 @@ public class MainServer {
 			byte[] data = Arrays.copyOfRange(buffer.array(), 0, bytesRead);
 			for (byte b : data) {
 				while (!iods.offer(b));
-			}
-		});
-	}
-
-	private void write(SelectionKey key) throws IOException {
-		final SocketChannel channel = (SocketChannel) key.channel();
-		ioWorker.submit(() -> {
-			try {
-				channel.write(ByteBuffer.wrap(SERVER_BUSY));
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		});
 	}
