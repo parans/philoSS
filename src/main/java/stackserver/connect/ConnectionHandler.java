@@ -43,9 +43,7 @@ public class ConnectionHandler implements Runnable {
 			Response res = serviceImpl.handleRequest(req);
 			output = PacketSerializer.serialize(res);
 			if (output != null && connection.channel.isOpen()) {
-				logger.info("Writing out the request to socket");
 				connection.channel.write(ByteBuffer.wrap(output));
-				logger.info("Done writing request");
 			}
 		} catch (IOException e) {
 			logger.info("IOException:" + e.getStackTrace());

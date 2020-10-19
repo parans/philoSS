@@ -1,6 +1,5 @@
 package stackserver.data;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class PacketSerializer {
@@ -26,8 +25,6 @@ public class PacketSerializer {
 			byte[] payload = Arrays.copyOfRange(packet, 1, packet.length);
 			req = new PushRequest();
 			req.payload(payload);
-			System.out.println("Payload:"
-					+ new String(payload, StandardCharsets.US_ASCII));
 		}
 		return req;
 	}

@@ -60,7 +60,7 @@ public class MainServer {
 		ServerSocketChannel serverChannel = ServerSocketChannel.open();
 		serverChannel.configureBlocking(false);
 
-		// retrieve server socket and bind to port, queue length 150
+		//retrieve server socket and bind to port, backlog queue length 150
 		serverChannel.socket().bind(listenAddress, 150);
 		serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
@@ -102,7 +102,6 @@ public class MainServer {
 	 * @throws IOException
 	 */
 	private void accept(SelectionKey key) throws IOException {
-		logger.info("Accepting socket");
 		ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
 		final SocketChannel channel = serverChannel.accept();
 		channel.configureBlocking(false);
@@ -117,7 +116,6 @@ public class MainServer {
 			channel.write(ByteBuffer.wrap(SERVER_BUSY));
 		}
 		channel.register(selector, SelectionKey.OP_READ);
-		logger.info("Accepted, registered");
 	}
 
 	/**
