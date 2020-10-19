@@ -6,6 +6,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
+import stackserver.data.LifoServerConfig;
+
 public class LifoDataSource implements DataSource {
 
 	private int capacity;
@@ -36,7 +38,9 @@ public class LifoDataSource implements DataSource {
 			try {
 				stackFull.await();
 			} catch (InterruptedException e) {
-				logger.info(Thread.currentThread() + " interrupted");
+				if (LifoServerConfig.verbose) {
+					logger.info(Thread.currentThread() + " interrupted");
+				}
 				stackLock.unlock();
 				return null;
 			}
@@ -44,8 +48,10 @@ public class LifoDataSource implements DataSource {
 		stack.addLast(item);
 		stackEmpty.signal();
 		stackLock.unlock();
-		logger.info("Adding item to dataSource:"
-				+ new String(item, StandardCharsets.US_ASCII));
+		if (LifoServerConfig.verbose) {
+			logger.info("Adding item to dataSource:"
+					+ new String(item, StandardCharsets.US_ASCII));
+		}
 		byte[] res = new byte[]{0};
 		return res;
 	}
@@ -59,7 +65,9 @@ public class LifoDataSource implements DataSource {
 			try {
 				stackEmpty.await();
 			} catch (InterruptedException e) {
-				logger.info(Thread.currentThread() + " interrupted");
+				if (LifoServerConfig.verbose) {
+					logger.info(Thread.currentThread() + " interrupted");
+				}
 				stackLock.unlock();
 				return null;
 			}
@@ -67,8 +75,10 @@ public class LifoDataSource implements DataSource {
 		byte[] item = stack.removeLast();
 		stackFull.signal();
 		stackLock.unlock();
-		logger.info("Removing item from dataSource:"
-				+ new String(item, StandardCharsets.US_ASCII));
+		if (LifoServerConfig.verbose) {
+			logger.info("Removing item from dataSource:"
+					+ new String(item, StandardCharsets.US_ASCII));
+		}
 		return item;
 	}
 }

@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 
 import stackserver.connect.Connection;
 import stackserver.connect.ConnectionHandler;
+import stackserver.data.LifoServerConfig;
 import stackserver.service.Service;
 
 public class ServerPool {
@@ -56,7 +57,9 @@ public class ServerPool {
 	public boolean submit(Connection connection) throws IOException {
 		synchronizer.lock();
 		try {
-			logger.info("Connection queue size:" + connectionQueue.size());
+			if (LifoServerConfig.verbose) {
+				logger.info("Connection queue size:" + connectionQueue.size());
+			}
 			if (connectionQueue.size() == poolSize) {
 				SocketChannel key = connectionQueue.keySet().iterator().next();
 				if (connectionQueue.get(key) + 10000L < System

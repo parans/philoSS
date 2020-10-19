@@ -17,6 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import stackserver.connect.Connection;
+import stackserver.data.LifoServerConfig;
 import stackserver.datasource.DataSource;
 import stackserver.datasource.LifoDataSource;
 import stackserver.service.LifoService;
@@ -116,6 +117,9 @@ public class MainServer {
 			channel.write(ByteBuffer.wrap(SERVER_BUSY));
 		}
 		channel.register(selector, SelectionKey.OP_READ);
+		if(LifoServerConfig.verbose) {
+			logger.info("Accepted connection, registered");
+		}
 	}
 
 	/**
@@ -131,7 +135,9 @@ public class MainServer {
 		LinkedBlockingQueue<Byte> iods = dataMapper.get(channel);
 
 		if (numRead == -1) {
-			logger.info("Closing connection");
+			if(LifoServerConfig.verbose) {
+				logger.info("Closing connection");
+			}
 			sp.abortHandler(channel);
 			channel.close();
 			key.cancel();
@@ -152,6 +158,9 @@ public class MainServer {
 		int size = (args != null && args.length >= 1)
 				? Integer.parseInt(args[0])
 				: 100;
+		LifoServerConfig.verbose = (args.length >= 2 && args[1] != null)
+				? Boolean.parseBoolean(args[1])
+				: false;
 		logger.info("Internal size :" + size);
 		DataSource ds = new LifoDataSource(size);
 		Service ls = new LifoService(ds);

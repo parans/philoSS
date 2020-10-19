@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
+import stackserver.data.LifoServerConfig;
 import stackserver.data.PacketSerializer;
 import stackserver.data.Request;
 import stackserver.data.Response;
@@ -48,7 +49,10 @@ public class ConnectionHandler implements Runnable {
 		} catch (IOException e) {
 			logger.info("IOException:" + e.getStackTrace());
 		} catch (InterruptedException e) {
-			logger.info("Thread interrupted while reading:" + e.getMessage());
+			if (LifoServerConfig.verbose) {
+				logger.info(
+						"Thread interrupted while reading:" + e.getMessage());
+			}
 		} finally {
 			socketMap.remove(connection.channel);
 			synchronizer.lock();
