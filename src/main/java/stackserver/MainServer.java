@@ -23,6 +23,7 @@ public class MainServer {
     private InetSocketAddress listenAddress;
 	private ServerPool sp;
 	private ExecutorService ioWorker;
+	private ExecutorService busyWorker;
 	private int size;
 	
 	private static final byte[] SERVER_BUSY = new byte[] {(byte) 0xff};
@@ -33,6 +34,7 @@ public class MainServer {
 		this.listenAddress = new InetSocketAddress(address, port);
         this.dataMapper = new ConcurrentHashMap<SocketChannel, LinkedBlockingQueue<Byte>>();
         this.ioWorker = Executors.newSingleThreadExecutor();
+        this.busyWorker = Executors.newSingleThreadExecutor();
         this.size = size;
 	}
     
@@ -52,7 +54,7 @@ public class MainServer {
         serverChannel.configureBlocking(false);
  
         // retrieve server socket and bind to port
-        serverChannel.socket().bind(listenAddress, size);
+        serverChannel.socket().bind(listenAddress, 150);
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
         
         logger.info("Server started...");
@@ -77,6 +79,8 @@ public class MainServer {
 	                    accept(key);
 	                } else if(key.isReadable()) {
 	                	read(key);
+	                } else if (key.isWritable()) {
+	                	write(key);
 	                }
 	            }
 			} catch (IOException e1) {
@@ -91,7 +95,7 @@ public class MainServer {
         }
     }
     
-  //accept a connection made to this channel's socket
+    //accept a connection made to this channel's socket
     private void accept(SelectionKey key) throws IOException {
     	logger.info("Accepting socket");
         ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
@@ -104,11 +108,8 @@ public class MainServer {
         dataMapper.put(channel, iods);
         boolean accepted = sp.submit(new Connection(channel, iods));
         if(!accepted) {
-        	System.out.println("Server busy");
+        	logger.info("Server busy");
         	channel.write(ByteBuffer.wrap(SERVER_BUSY));
-        	channel.close();
-            key.cancel();
-            return;
         }
         channel.register(selector, SelectionKey.OP_READ);
         logger.info("Accepted, registered");
@@ -137,6 +138,17 @@ public class MainServer {
             for(byte b : data) {
             	while(!iods.offer(b));
             }
+        });
+    }
+    
+    private void write(SelectionKey key) throws IOException {
+        final SocketChannel channel = (SocketChannel) key.channel();
+        ioWorker.submit(() -> {
+        	try {
+				channel.write(ByteBuffer.wrap(SERVER_BUSY));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
         });
     }
     
