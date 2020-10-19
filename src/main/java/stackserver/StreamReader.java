@@ -8,7 +8,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class StreamReader {
 	
 	public static byte[] toByteArray(InputStream is) throws IOException {
-		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		byte[] arr = new byte[129];
 		int total = 0;

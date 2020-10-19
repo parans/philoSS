@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
@@ -20,14 +22,18 @@ public class MainServer {
     private Map<SocketChannel, LinkedBlockingQueue<Byte>> dataMapper;
     private InetSocketAddress listenAddress;
 	private ServerPool sp;
+	private ExecutorService ioWorker;
+	private int size;
 	
-	private final byte[] SERVER_BUSY = new byte[] {(byte) 0xff};
+	private static final byte[] SERVER_BUSY = new byte[] {(byte) 0xff};
 	static Logger logger = Logger.getLogger(MainServer.class.getName());
  
-	public MainServer(ServerPool sp, String address, int port) {
+	public MainServer(ServerPool sp, String address, int port, int size) {
 		this.sp = sp;
-		listenAddress = new InetSocketAddress(address, port);
-        dataMapper = new ConcurrentHashMap<SocketChannel, LinkedBlockingQueue<Byte>>();
+		this.listenAddress = new InetSocketAddress(address, port);
+        this.dataMapper = new ConcurrentHashMap<SocketChannel, LinkedBlockingQueue<Byte>>();
+        this.ioWorker = Executors.newSingleThreadExecutor();
+        this.size = size;
 	}
     
     public void stop() {
@@ -38,8 +44,6 @@ public class MainServer {
 		}
     }
     
-    
-    
     //create server channel    
 	public void startServer() throws IOException {
         selector = Selector.open();
@@ -48,17 +52,14 @@ public class MainServer {
         serverChannel.configureBlocking(false);
  
         // retrieve server socket and bind to port
-        serverChannel.socket().bind(listenAddress);
+        serverChannel.socket().bind(listenAddress, size);
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
         
-        System.out.println("Server started...");
- 
+        logger.info("Server started...");
         while (true) {
             // wait for events
             try {
-            	
 				selector.select();
-				//System.out.println("Events received" + c);
 				
 				//work on selected keys
 	            Iterator keys = this.selector.selectedKeys().iterator();
@@ -74,7 +75,6 @@ public class MainServer {
 	                } 
 	                if (key.isAcceptable()) {
 	                    accept(key);
-	                    System.out.println("Done accepting");
 	                } else if(key.isReadable()) {
 	                	read(key);
 	                }
@@ -84,7 +84,7 @@ public class MainServer {
 			}
  
             try {
-				Thread.sleep(2);
+				Thread.sleep(3);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -93,7 +93,7 @@ public class MainServer {
     
   //accept a connection made to this channel's socket
     private void accept(SelectionKey key) throws IOException {
-    	System.out.println("Accepting socket");
+    	logger.info("Accepting socket");
         ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
         final SocketChannel channel = serverChannel.accept();
         channel.configureBlocking(false);
@@ -111,19 +111,19 @@ public class MainServer {
             return;
         }
         channel.register(selector, SelectionKey.OP_READ);
-        System.out.println("Accepted, registered");
+        logger.info("Accepted, registered");
     }
      
     //read from the socket channel
     private void read(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(256);
+        ByteBuffer buffer = ByteBuffer.allocate(130);
         int numRead = -1;
         numRead = channel.read(buffer);
         LinkedBlockingQueue<Byte> iods = dataMapper.get(channel);
         
         if (numRead == -1) {
-        	System.out.println("Closing connection");
+        	logger.info("Closing connection");
             sp.abortHandler(channel);
             channel.close();
             key.cancel();
@@ -131,18 +131,22 @@ public class MainServer {
             return;
         }
         
-        byte[] data = Arrays.copyOfRange(buffer.array(), 0, numRead);
-        for(byte b : data) {
-        	while(!iods.offer(b));
-        }
+        final int bytesRead = numRead;
+        ioWorker.submit(() -> {
+        	byte[] data = Arrays.copyOfRange(buffer.array(), 0, bytesRead);
+            for(byte b : data) {
+            	while(!iods.offer(b));
+            }
+        });
     }
     
     public static void main(String[] args) {
-    	
-    	DataSource ds = new LifoDataSource(100);
+    	int size = (args !=null && args.length >= 1) ? Integer.parseInt(args[0]): 100; 
+    	logger.info("Internal size :" + size);
+    	DataSource ds = new LifoDataSource(size);
     	Service ls = new LifoService(ds);
-    	ServerPool sp = new ServerPool(100, ls);
-        MainServer server = new MainServer(sp, "localhost", 8080);
+    	ServerPool sp = new ServerPool(size, ls);
+        MainServer server = new MainServer(sp, "localhost", 8080, size);
 		try {
 			server.startServer();
 		} catch (IOException e) {

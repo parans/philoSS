@@ -1,5 +1,6 @@
 package stackserver;
 
+import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -37,14 +38,18 @@ public class ServerPool {
 		}
 	}
 	
-	public boolean submit(Connection connection) {
+	public boolean submit(Connection connection) throws IOException {
 		synchronizer.lock();
 		try {
-			System.out.println("Connection queue size:" + connectionQueue.size());
+			logger.info("Connection queue size:" + connectionQueue.size());
 			if(connectionQueue.size() == poolSize) {
 				SocketChannel key = connectionQueue.keySet().iterator().next();
 				if(connectionQueue.get(key) + 10000L < System.currentTimeMillis()) {
+					logger.info("Aborting slow client");
 					abortHandler(key);
+					//key.shutdownInput();
+					//key.shutdownOutput();
+					key.close();
 				} else {
 					return false;
 				}
