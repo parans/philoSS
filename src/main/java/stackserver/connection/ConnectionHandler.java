@@ -1,4 +1,4 @@
-package stackserver.connect;
+package stackserver.connection;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

@@ -11,8 +11,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
-import stackserver.connect.Connection;
-import stackserver.connect.ConnectionHandler;
+import stackserver.connection.Connection;
+import stackserver.connection.ConnectionHandler;
 import stackserver.data.LifoServerConfig;
 import stackserver.service.Service;
 

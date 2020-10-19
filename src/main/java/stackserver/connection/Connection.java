@@ -1,4 +1,4 @@
-package stackserver.connect;
+package stackserver.connection;
 
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.LinkedBlockingQueue;

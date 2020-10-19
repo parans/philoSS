@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import stackserver.connect.Connection;
+import stackserver.connection.Connection;
 import stackserver.data.LifoServerConfig;
 import stackserver.datasource.DataSource;
 import stackserver.datasource.LifoDataSource;
