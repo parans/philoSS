@@ -1,4 +1,6 @@
-package stackserver;
+package stackserver.data;
+
+import stackserver.service.Service;
 
 public class PopRequest implements Request {
 

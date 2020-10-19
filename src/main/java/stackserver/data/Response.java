@@ -1,4 +1,4 @@
-package stackserver;
+package stackserver.data;
 
 public interface Response {
 	byte[] payload();

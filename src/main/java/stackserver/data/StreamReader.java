@@ -1,4 +1,4 @@
-package stackserver;
+package stackserver.data;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -3,10 +3,10 @@ package ss;
 import java.io.ByteArrayOutputStream;
 import java.net.Socket;
 
-import stackserver.Connection;
 import stackserver.LocalConnectionHandler;
 import stackserver.ServerPool;
-import stackserver.Service;
+import stackserver.connect.Connection;
+import stackserver.service.Service;
 
 public class LocalServerPool extends ServerPool {
 	

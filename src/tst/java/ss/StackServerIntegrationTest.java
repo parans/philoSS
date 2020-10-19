@@ -20,15 +20,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import stackserver.DataSource;
-import stackserver.LifoDataSource;
-import stackserver.LifoService;
 import stackserver.MainServer;
 import stackserver.ServerPool;
-import stackserver.Service;
-import stackserver.StreamReader;
-import stackserver.nio.SocketClientExample;
-import stackserver.nio.SocketServerExample;
+import stackserver.data.StreamReader;
+import stackserver.datasource.DataSource;
+import stackserver.datasource.LifoDataSource;
+import stackserver.service.LifoService;
+import stackserver.service.Service;
 
 public class StackServerIntegrationTest {
 

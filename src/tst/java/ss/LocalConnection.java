@@ -3,7 +3,7 @@ package ss;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import stackserver.Connection;
+import stackserver.connect.Connection;
 
 public class LocalConnection extends Connection {
 	public byte[] input;

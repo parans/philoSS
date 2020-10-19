@@ -20,7 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import stackserver.StreamReader;
+import stackserver.data.StreamReader;
 
 public class StreamReaderTest {
 	

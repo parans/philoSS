@@ -23,16 +23,16 @@ import org.junit.internal.runners.JUnit4ClassRunner;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import stackserver.ConnectionHandler;
-import stackserver.DataSource;
-import stackserver.LifoDataSource;
-import stackserver.LifoService;
 import stackserver.MainServer;
-import stackserver.PacketSerializer;
-import stackserver.Request;
-import stackserver.Response;
 import stackserver.ServerPool;
-import stackserver.Service;
+import stackserver.connect.ConnectionHandler;
+import stackserver.data.PacketSerializer;
+import stackserver.data.Request;
+import stackserver.data.Response;
+import stackserver.datasource.DataSource;
+import stackserver.datasource.LifoDataSource;
+import stackserver.service.LifoService;
+import stackserver.service.Service;
 
 
 @RunWith(JUnit4ClassRunner.class)

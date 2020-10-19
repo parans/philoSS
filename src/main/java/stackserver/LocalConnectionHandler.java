@@ -3,6 +3,13 @@ package stackserver;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
+import stackserver.connect.Connection;
+import stackserver.connect.ConnectionHandler;
+import stackserver.data.PacketSerializer;
+import stackserver.data.Request;
+import stackserver.data.Response;
+import stackserver.service.Service;
+
 public class LocalConnectionHandler extends ConnectionHandler  {
 	 byte[] item;
 	 byte[] output;

@@ -11,17 +11,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
+import stackserver.connect.Connection;
+import stackserver.connect.ConnectionHandler;
+import stackserver.service.Service;
+
 public class ServerPool {
-	
+
 	protected Service service;
 	protected ExecutorService es;
 	protected int poolSize;
 	protected ReentrantLock synchronizer;
 	protected LinkedHashMap<SocketChannel, Long> connectionQueue;
 	protected Map<SocketChannel, Thread> socketMap;
-	
+
 	private static Logger logger = Logger.getLogger(ServerPool.class.getName());
-	
+
 	public ServerPool(int poolSize, Service service) {
 		this.service = service;
 		this.poolSize = poolSize;
@@ -30,42 +34,45 @@ public class ServerPool {
 		this.synchronizer = new ReentrantLock(true);
 		this.socketMap = new ConcurrentHashMap<>();
 	}
-	
+
 	public void abortHandler(SocketChannel socket) {
-		if(socketMap.containsKey(socket)) {
+		if (socketMap.containsKey(socket)) {
 			Thread handler = socketMap.get(socket);
-			if(handler != null) handler.interrupt();
+			if (handler != null)
+				handler.interrupt();
 		}
 	}
-	
+
 	public boolean submit(Connection connection) throws IOException {
 		synchronizer.lock();
 		try {
 			logger.info("Connection queue size:" + connectionQueue.size());
-			if(connectionQueue.size() == poolSize) {
+			if (connectionQueue.size() == poolSize) {
 				SocketChannel key = connectionQueue.keySet().iterator().next();
-				if(connectionQueue.get(key) + 10000L < System.currentTimeMillis()) {
+				if (connectionQueue.get(key) + 10000L < System
+						.currentTimeMillis()) {
 					logger.info("Aborting slow client");
 					abortHandler(key);
-					//key.shutdownInput();
-					//key.shutdownOutput();
+					// key.shutdownInput();
+					// key.shutdownOutput();
 					key.close();
 				} else {
 					return false;
 				}
 			}
 			connectionQueue.put(connection.channel, System.currentTimeMillis());
-			es.submit(new ConnectionHandler(connection, service, synchronizer, connectionQueue, socketMap));
+			es.submit(new ConnectionHandler(connection, service, synchronizer,
+					connectionQueue, socketMap));
 			return true;
 		} finally {
 			synchronizer.unlock();
 		}
 	}
-	
+
 	public void drain() {
 		synchronizer.lock();
 		Iterator<SocketChannel> it = connectionQueue.keySet().iterator();
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			abortHandler(it.next());
 		}
 		connectionQueue.clear();

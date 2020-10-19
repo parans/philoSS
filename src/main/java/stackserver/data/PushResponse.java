@@ -1,10 +1,9 @@
-package stackserver;
+package stackserver.data;
 
-public class PopResponse implements Response {
-
+public class PushResponse implements Response {
 	byte[] payload;
 
-	public PopResponse(byte[] payload) {
+	PushResponse(byte[] payload) {
 		this.payload = payload;
 	}
 

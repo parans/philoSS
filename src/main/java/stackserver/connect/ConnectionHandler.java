@@ -1,4 +1,4 @@
-package stackserver;
+package stackserver.connect;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -7,6 +7,12 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
+import stackserver.data.PacketSerializer;
+import stackserver.data.Request;
+import stackserver.data.Response;
+import stackserver.data.StreamReader;
+import stackserver.service.Service;
+
 public class ConnectionHandler implements Runnable {
 
 	protected Connection connection;
@@ -14,9 +20,10 @@ public class ConnectionHandler implements Runnable {
 	protected ReentrantLock synchronizer;
 	protected Map<SocketChannel, Thread> socketMap;
 	protected Map<SocketChannel, Long> connectionQueue;
-	static Logger logger = Logger.getLogger(ConnectionHandler.class.getName());
-	
-	public ConnectionHandler(Connection connection, Service service, ReentrantLock sync, Map<SocketChannel, Long> connectionQueue,
+	private static Logger logger = Logger.getLogger(ConnectionHandler.class.getName());
+
+	public ConnectionHandler(Connection connection, Service service,
+			ReentrantLock sync, Map<SocketChannel, Long> connectionQueue,
 			Map<SocketChannel, Thread> socketMap) {
 		this.connection = connection;
 		this.serviceImpl = service;
@@ -24,7 +31,7 @@ public class ConnectionHandler implements Runnable {
 		this.socketMap = socketMap;
 		this.connectionQueue = connectionQueue;
 	}
-	
+
 	@Override
 	public void run() {
 		byte[] output = null;
@@ -35,7 +42,7 @@ public class ConnectionHandler implements Runnable {
 			req.service(serviceImpl);
 			Response res = serviceImpl.handleRequest(req);
 			output = PacketSerializer.serialize(res);
-			if(output != null && connection.channel.isOpen()) {
+			if (output != null && connection.channel.isOpen()) {
 				logger.info("Writing out the request to socket");
 				connection.channel.write(ByteBuffer.wrap(output));
 				logger.info("Done writing request");

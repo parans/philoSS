@@ -1,4 +1,8 @@
-package stackserver;
+package stackserver.service;
+
+import stackserver.data.Request;
+import stackserver.data.Response;
+import stackserver.datasource.DataSource;
 
 public class LifoService implements Service {
 

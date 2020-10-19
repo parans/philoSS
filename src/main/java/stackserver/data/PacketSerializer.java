@@ -1,4 +1,4 @@
-package stackserver;
+package stackserver.data;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

@@ -1,14 +1,16 @@
-package stackserver;
+package stackserver.data;
 
-public class PushRequest implements Request{
+import stackserver.service.Service;
+
+public class PushRequest implements Request {
 
 	byte[] payload;
 	Service serviceImpl;
-	
+
 	@Override
 	public Response execute() {
-		byte[] res = serviceImpl.dataSource().addItem(payload); 
-		if(res == null) {
+		byte[] res = serviceImpl.dataSource().addItem(payload);
+		if (res == null) {
 			return new PushResponse(null);
 		}
 		return new PushResponse(res);
