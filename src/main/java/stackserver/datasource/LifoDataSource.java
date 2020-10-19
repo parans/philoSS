@@ -10,6 +10,7 @@ public class LifoDataSource implements DataSource {
 
 	private int capacity;
 	private ReentrantLock stackLock;
+	//Doubly Linked List being used as a stack
 	private LinkedList<byte[]> stack;
 	private Condition stackFull;
 	private Condition stackEmpty;
@@ -24,6 +25,9 @@ public class LifoDataSource implements DataSource {
 		stackEmpty = stackLock.newCondition();
 	}
 
+	/**
+	 * Add Item to a stack
+	 */
 	public byte[] addItem(byte[] item) {
 		if (item == null || item.length == 0)
 			return new byte[]{0};
@@ -46,6 +50,9 @@ public class LifoDataSource implements DataSource {
 		return res;
 	}
 
+	/**
+	 * Pop Item from the stack
+	 */
 	public byte[] remove() {
 		stackLock.lock();
 		while (stack.isEmpty()) {

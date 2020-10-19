@@ -1,4 +1,4 @@
-package stackserver;
+package stackserver.nio;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -46,36 +46,35 @@ public class MainServer {
 		try {
 			this.selector.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.info("Error closing selector" + e.getMessage());
 		}
 	}
 
-	// create server channel
+	/**
+	 * Start NIO server
+	 * @throws IOException
+	 */
 	public void startServer() throws IOException {
 		selector = Selector.open();
 
 		ServerSocketChannel serverChannel = ServerSocketChannel.open();
 		serverChannel.configureBlocking(false);
 
-		// retrieve server socket and bind to port
+		// retrieve server socket and bind to port, queue length 150
 		serverChannel.socket().bind(listenAddress, 150);
 		serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
 		logger.info("Server started...");
 		while (true) {
-			// wait for events
 			try {
 				selector.select();
-
 				// work on selected keys
 				Iterator keys = this.selector.selectedKeys().iterator();
 				while (keys.hasNext()) {
 					SelectionKey key = (SelectionKey) keys.next();
-
-					// this is necessary to prevent the same key from coming up
-					// again the next time around.
+					
 					keys.remove();
-
+					
 					if (!key.isValid()) {
 						continue;
 					}
@@ -86,7 +85,7 @@ public class MainServer {
 					}
 				}
 			} catch (IOException e1) {
-				e1.printStackTrace();
+				logger.info("Exception in event loop :" + e1.getMessage());
 			}
 
 			try {
@@ -96,8 +95,12 @@ public class MainServer {
 			}
 		}
 	}
-
-	// accept a connection made to this channel's socket
+	
+	/**
+	 * accept a connection made to this channel's socket
+	 * @param key
+	 * @throws IOException
+	 */
 	private void accept(SelectionKey key) throws IOException {
 		logger.info("Accepting socket");
 		ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
@@ -117,7 +120,11 @@ public class MainServer {
 		logger.info("Accepted, registered");
 	}
 
-	// read from the socket channel
+	/**
+	 * read from the socket channel
+	 * @param key
+	 * @throws IOException
+	 */
 	private void read(SelectionKey key) throws IOException {
 		SocketChannel channel = (SocketChannel) key.channel();
 		ByteBuffer buffer = ByteBuffer.allocate(130);

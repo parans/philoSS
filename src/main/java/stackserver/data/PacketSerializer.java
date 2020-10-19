@@ -9,6 +9,11 @@ public class PacketSerializer {
 		return res.payload();
 	}
 
+	/**
+	 * Convert byte packet to @{Request}
+	 * @param packet
+	 * @return
+	 */
 	public static Request deserialize(byte[] packet) {
 		Request req = null;
 		if (packet == null)

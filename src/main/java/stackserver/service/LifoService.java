@@ -16,6 +16,9 @@ public class LifoService implements Service {
 		return ds;
 	}
 
+	/**
+	 * Handle Request, serve from @{DataSource}
+	 */
 	@Override
 	public Response handleRequest(Request req) {
 		if (req == null)

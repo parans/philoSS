@@ -1,4 +1,4 @@
-package stackserver;
+package stackserver.nio;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
@@ -35,6 +35,10 @@ public class ServerPool {
 		this.socketMap = new ConcurrentHashMap<>();
 	}
 
+	/**
+	 * Interrupt the threads handling the connections
+	 * @param socket
+	 */
 	public void abortHandler(SocketChannel socket) {
 		if (socketMap.containsKey(socket)) {
 			Thread handler = socketMap.get(socket);
@@ -43,6 +47,12 @@ public class ServerPool {
 		}
 	}
 
+	/**
+	 * Submit connection to internal worker pool
+	 * @param connection
+	 * @return false if connection not submitted
+	 * @throws IOException
+	 */
 	public boolean submit(Connection connection) throws IOException {
 		synchronizer.lock();
 		try {
@@ -53,8 +63,6 @@ public class ServerPool {
 						.currentTimeMillis()) {
 					logger.info("Aborting slow client");
 					abortHandler(key);
-					// key.shutdownInput();
-					// key.shutdownOutput();
 					key.close();
 				} else {
 					return false;
@@ -69,6 +77,9 @@ public class ServerPool {
 		}
 	}
 
+	/**
+	 * Drain connections and stop connection handlers
+	 */
 	public void drain() {
 		synchronizer.lock();
 		Iterator<SocketChannel> it = connectionQueue.keySet().iterator();

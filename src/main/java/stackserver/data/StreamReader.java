@@ -7,6 +7,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class StreamReader {
 
+	/**
+	 * Read InputStream into a byte array
+	 * @param is
+	 * @return
+	 * @throws IOException
+	 */
 	public static byte[] toByteArray(InputStream is) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		byte[] arr = new byte[129];
@@ -32,6 +38,12 @@ public class StreamReader {
 		return baos.toByteArray();
 	}
 
+	/**
+	 * Read a @{LinkedBlockingQueue} to a byte array, block if no data in the queue
+	 * @param is
+	 * @return
+	 * @throws InterruptedException
+	 */
 	public static byte[] toByteArray(LinkedBlockingQueue<Byte> is)
 			throws InterruptedException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
